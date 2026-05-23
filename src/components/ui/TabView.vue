@@ -43,7 +43,9 @@ watch(
   <div
     class="flex grow flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm"
   >
-    <div class="flex items-center gap-2 border-b border-slate-200 px-3 py-3">
+    <div
+      class="shrink-0 flex items-center gap-2 border-b border-slate-200 px-3 py-3 overflow-x-auto"
+    >
       <button
         v-for="(tab, index) in tabs"
         :key="tab.id ?? index"

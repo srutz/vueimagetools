@@ -82,7 +82,7 @@ function onPointerUp(event: PointerEvent) {
 <template>
   <div
     ref="rootRef"
-    class="absolute z-10 flex flex-col gap-1 rounded-xl border border-slate-200 bg-white/95 p-1 shadow-lg backdrop-blur select-none"
+    class="absolute z-10 flex flex-col gap-1 rounded-xl border border-slate-200 bg-white/95 p-1 shadow-xl backdrop-blur select-none"
     :style="{ left: `${position.x}px`, top: `${position.y}px` }"
     role="toolbar"
     aria-label="Image tools"

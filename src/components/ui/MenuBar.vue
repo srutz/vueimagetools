@@ -5,8 +5,7 @@ import { Settings } from "@lucide/vue";
 <template>
   <nav class="border-b border-gray-200 flex items-center gap-4 px-4 py-2">
     <Settings />
-    <RouterLink to="/">Home</RouterLink>
-    <RouterLink to="/images">Images</RouterLink>
+    <RouterLink to="/">Images</RouterLink>
     <RouterLink to="/about">About</RouterLink>
   </nav>
 </template>

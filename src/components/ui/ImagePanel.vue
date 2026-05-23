@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 
 import { useImages, type ImageType } from "../../composables/useImages";
 import BaseButton from "./BaseButton.vue";
+import ImageHeader from "./ImageHeader.vue";
 import ImageToolbox, { type ToolId } from "./ImageToolbox.vue";
 
 const props = defineProps<{
@@ -13,12 +14,44 @@ const images = useImages();
 
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 const containerRef = ref<HTMLDivElement | null>(null);
+const scrollRef = ref<HTMLDivElement | null>(null);
 const activeTool = ref<ToolId | null>("zoom");
 const zoom = ref(1);
-const pan = ref({ x: 0, y: 0 });
 
 const MIN_ZOOM = 0.1;
 const MAX_ZOOM = 32;
+
+// Scale that makes the image fit the viewport at zoom level 1 (never enlarging
+// a small image, mirroring the old `max-w/h-full` behaviour). The displayed
+// size is this fit scale multiplied by the user zoom, applied as real CSS
+// dimensions so the browser produces native scrollbars when it overflows.
+const fitScale = ref(1);
+
+function computeFit() {
+  const viewport = scrollRef.value;
+
+  if (!viewport) {
+    return;
+  }
+
+  const iw = props.image.data.width;
+  const ih = props.image.data.height;
+
+  fitScale.value = Math.min(
+    viewport.clientWidth / iw,
+    viewport.clientHeight / ih,
+    1,
+  );
+}
+
+const canvasStyle = computed(() => {
+  const scale = fitScale.value * zoom.value;
+
+  return {
+    width: `${props.image.data.width * scale}px`,
+    height: `${props.image.data.height * scale}px`,
+  };
+});
 
 // Crop selection is tracked in viewport (client) coordinates so it stays
 // correct regardless of the canvas zoom/pan transform.
@@ -79,14 +112,16 @@ function handleToolClick(tool: ToolId) {
   activeTool.value = activeTool.value === tool ? null : tool;
 }
 
-function zoomAt(clientX: number, clientY: number, factor: number) {
+// Zooms toward a viewport point, keeping the image pixel under that point
+// fixed by adjusting the scroll position once the new size has been laid out.
+async function zoomAt(clientX: number, clientY: number, factor: number) {
+  const scroller = scrollRef.value;
   const canvas = canvasRef.value;
 
-  if (!canvas) {
+  if (!scroller || !canvas) {
     return;
   }
 
-  const rect = canvas.getBoundingClientRect();
   const oldZoom = zoom.value;
   const newZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, oldZoom * factor));
 
@@ -94,31 +129,101 @@ function zoomAt(clientX: number, clientY: number, factor: number) {
     return;
   }
 
-  const localX = (clientX - rect.left) / oldZoom;
-  const localY = (clientY - rect.top) / oldZoom;
+  const before = canvas.getBoundingClientRect();
+  const fx = (clientX - before.left) / before.width;
+  const fy = (clientY - before.top) / before.height;
 
-  pan.value = {
-    x: pan.value.x + localX * (oldZoom - newZoom),
-    y: pan.value.y + localY * (oldZoom - newZoom),
-  };
   zoom.value = newZoom;
+  await nextTick();
+
+  // Where the same fractional point sits now, then nudge scroll so it lands
+  // back under the cursor.
+  const after = canvas.getBoundingClientRect();
+  scroller.scrollLeft += after.left + fx * after.width - clientX;
+  scroller.scrollTop += after.top + fy * after.height - clientY;
 }
 
-function handleCanvasClick(event: MouseEvent) {
-  if (activeTool.value !== "zoom") {
-    return;
-  }
-
-  zoomAt(event.clientX, event.clientY, event.ctrlKey ? 0.5 : 2);
-}
-
-function handleCanvasContextMenu(event: MouseEvent) {
+function handleContextMenu(event: MouseEvent) {
   if (activeTool.value !== "zoom") {
     return;
   }
 
   event.preventDefault();
   zoomAt(event.clientX, event.clientY, 0.5);
+}
+
+function handleWheel(event: WheelEvent) {
+  // Plain wheel scrolls the viewport natively; Ctrl/Cmd + wheel zooms.
+  if (!event.ctrlKey && !event.metaKey) {
+    return;
+  }
+
+  event.preventDefault();
+  zoomAt(event.clientX, event.clientY, event.deltaY < 0 ? 1.1 : 1 / 1.1);
+}
+
+// Drag-to-pan and click-to-zoom share the same pointer gesture: a press that
+// moves past a small threshold pans, a press that stays put zooms.
+const isPanning = ref(false);
+let panPointerId: number | null = null;
+let panStart: { x: number; y: number; left: number; top: number } | null = null;
+let panMoved = false;
+
+function handlePanDown(event: PointerEvent) {
+  if (activeTool.value === "crop" || event.button !== 0) {
+    return;
+  }
+
+  const scroller = scrollRef.value;
+
+  if (!scroller) {
+    return;
+  }
+
+  panPointerId = event.pointerId;
+  panMoved = false;
+  panStart = {
+    x: event.clientX,
+    y: event.clientY,
+    left: scroller.scrollLeft,
+    top: scroller.scrollTop,
+  };
+  scroller.setPointerCapture(event.pointerId);
+}
+
+function handlePanMove(event: PointerEvent) {
+  if (panPointerId === null || !panStart) {
+    return;
+  }
+
+  const scroller = scrollRef.value!;
+  const dx = event.clientX - panStart.x;
+  const dy = event.clientY - panStart.y;
+
+  if (!panMoved && Math.hypot(dx, dy) > 4) {
+    panMoved = true;
+    isPanning.value = true;
+  }
+
+  if (panMoved) {
+    scroller.scrollLeft = panStart.left - dx;
+    scroller.scrollTop = panStart.top - dy;
+  }
+}
+
+function handlePanUp(event: PointerEvent) {
+  if (panPointerId === null) {
+    return;
+  }
+
+  scrollRef.value?.releasePointerCapture(panPointerId);
+  panPointerId = null;
+  isPanning.value = false;
+
+  // A press without a real drag is a click: zoom in (or out with Ctrl).
+  if (!panMoved && activeTool.value === "zoom") {
+    zoomAt(event.clientX, event.clientY, event.ctrlKey ? 0.5 : 2);
+  }
 }
 
 function clearSelection() {
@@ -210,13 +315,47 @@ async function applyCrop() {
   previous.close();
 
   clearSelection();
-  zoom.value = 1;
-  pan.value = { x: 0, y: 0 };
+  resetView();
 }
 
-onMounted(drawImage);
+function resetView() {
+  zoom.value = 1;
+  computeFit();
 
-watch(() => props.image, drawImage, { deep: true });
+  const scroller = scrollRef.value;
+
+  if (scroller) {
+    scroller.scrollLeft = 0;
+    scroller.scrollTop = 0;
+  }
+}
+
+let resizeObserver: ResizeObserver | null = null;
+
+onMounted(() => {
+  computeFit();
+  drawImage();
+
+  const viewport = scrollRef.value;
+
+  if (viewport) {
+    resizeObserver = new ResizeObserver(computeFit);
+    resizeObserver.observe(viewport);
+  }
+});
+
+onUnmounted(() => {
+  resizeObserver?.disconnect();
+});
+
+watch(
+  () => props.image,
+  () => {
+    drawImage();
+    resetView();
+  },
+  { deep: true },
+);
 watch(activeTool, (tool) => {
   if (tool !== "crop") {
     clearSelection();
@@ -227,38 +366,37 @@ watch(activeTool, (tool) => {
   <section
     class="flex h-full flex-col gap-4 bg-slate-50 p-2 sm:p-6 justify-start"
   >
-    <div class="flex items-center gap-4 justify-between">
-      <p class="truncate text-lg font-semibold text-slate-950">
-        {{ image.name }}
-      </p>
-      <p class="text-sm text-slate-500">
-        {{ image.data.width }} x {{ image.data.height }} px
-      </p>
-    </div>
-    <div
-      ref="containerRef"
-      class="relative flex min-h-0 grow items-start justify-start overflow-hidden"
-    >
-      <canvas
-        ref="canvasRef"
+    <ImageHeader :image="image" />
+    <div ref="containerRef" class="relative flex min-h-0 grow overflow-hidden">
+      <div
+        ref="scrollRef"
         :class="[
-          'max-h-full max-w-full origin-top-left bg-[linear-gradient(45deg,#f8fafc_25%,transparent_25%,transparent_75%,#f8fafc_75%,#f8fafc),linear-gradient(45deg,#f8fafc_25%,transparent_25%,transparent_75%,#f8fafc_75%,#f8fafc)] bg-[length:24px_24px] bg-[position:0_0,12px_12px] shadow-lg',
-          activeTool === 'zoom'
-            ? 'cursor-zoom-in'
-            : activeTool === 'crop'
-              ? 'cursor-crosshair'
-              : '',
+          'absolute inset-0 flex overflow-auto [align-items:safe_center] [justify-content:safe_center]',
+          activeTool === 'crop'
+            ? 'cursor-crosshair'
+            : isPanning
+              ? 'cursor-grabbing'
+              : activeTool === 'zoom'
+                ? 'cursor-zoom-in'
+                : 'cursor-grab',
         ]"
-        :style="{
-          transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-        }"
-        @click="handleCanvasClick"
-        @contextmenu="handleCanvasContextMenu"
-        @pointerdown="handlePointerDown"
-        @pointermove="handlePointerMove"
-        @pointerup="handlePointerUp"
-        @pointercancel="handlePointerUp"
-      />
+        @pointerdown="handlePanDown"
+        @pointermove="handlePanMove"
+        @pointerup="handlePanUp"
+        @pointercancel="handlePanUp"
+        @contextmenu="handleContextMenu"
+        @wheel="handleWheel"
+      >
+        <canvas
+          ref="canvasRef"
+          class="m-auto shrink-0 bg-[linear-gradient(45deg,#f8fafc_25%,transparent_25%,transparent_75%,#f8fafc_75%,#f8fafc),linear-gradient(45deg,#f8fafc_25%,transparent_25%,transparent_75%,#f8fafc_75%,#f8fafc)] bg-[length:24px_24px] bg-[position:0_0,12px_12px] shadow-lg"
+          :style="canvasStyle"
+          @pointerdown="handlePointerDown"
+          @pointermove="handlePointerMove"
+          @pointerup="handlePointerUp"
+          @pointercancel="handlePointerUp"
+        />
+      </div>
 
       <div
         v-if="activeTool === 'crop' && selectionStyle"

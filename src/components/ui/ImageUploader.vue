@@ -95,25 +95,21 @@ async function processFiles(fileList: FileList | null) {
         class="pointer-events-none absolute inset-x-0 top-0 h-32 bg-linear-to-b from-white/80 to-transparent"
       />
 
-      <div class="relative flex flex-col gap-6">
-        <div
-          class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"
-        >
-          <div class="max-w-xl space-y-3">
-            <div
-              class="inline-flex w-fit items-center gap-2 rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold tracking-[0.2em] text-white uppercase"
-            >
-              <ImagePlus class="h-4 w-4" />
-              Upload Images
-            </div>
+      <div class="relative flex flex-col gap-6 items-center">
+        <div class="max-w-xl space-y-3 flex flex-col gap-2 self-center">
+          <div
+            class="inline-flex w-fit items-center gap-2 rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold tracking-[0.2em] text-white uppercase"
+          >
+            <ImagePlus class="h-4 w-4" />
+            Upload Images
+          </div>
 
-            <div class="space-y-2">
-              <p class="text-sm leading-6 text-slate-600 sm:text-base">
-                Drop one or more images anywhere in this card, or browse your
-                files. Uploaded images are added to the app as soon as
-                processing finishes.
-              </p>
-            </div>
+          <div class="space-y-2">
+            <p class="text-sm leading-6 text-slate-600 sm:text-base">
+              Drop one or more images anywhere in this card, or browse your
+              files. Uploaded images are added to the app as soon as processing
+              finishes.
+            </p>
           </div>
         </div>
 

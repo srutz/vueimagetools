@@ -11,6 +11,8 @@ import TabView from "../ui/TabView.vue";
 
 const images = useImages();
 
+const activeId = ref<string>();
+
 const tabs = computed(() =>
   images.images.map((image) => ({
     id: image.id,
@@ -25,6 +27,13 @@ function handleCloseTab(tabId?: string) {
     return;
   }
 
+  // If we're closing the active tab, move selection to a neighbour first so the
+  // view doesn't snap back to the first tab.
+  if (tabId === activeId.value) {
+    const index = images.images.findIndex((image) => image.id === tabId);
+    activeId.value = (images.images[index + 1] ?? images.images[index - 1])?.id;
+  }
+
   images.removeImage(tabId);
 }
 
@@ -32,6 +41,9 @@ function handleUploadComplete(uploadedImages: ImageType[]) {
   for (const image of uploadedImages) {
     images.addImage(image);
   }
+  // Focus the freshly uploaded image.
+  activeId.value = uploadedImages.at(-1)?.id;
+  uploadDialogOpen.value = false;
 }
 
 const uploadDialogOpen = ref(false);
@@ -54,6 +66,7 @@ const handleDialogOpenChange = (value: boolean) => {
         <PlusCircleIcon></PlusCircleIcon>
       </button>
       <BaseDialog
+        class="w-[800px] max-w-[90%]"
         title="Upload more images"
         :open="uploadDialogOpen"
         @openchange="handleDialogOpenChange($event)"
@@ -64,6 +77,7 @@ const handleDialogOpenChange = (value: boolean) => {
 
     <TabView
       v-if="tabs.length > 0"
+      v-model:active-id="activeId"
       :tabs="tabs"
       @close-tab="handleCloseTab($event.id)"
     />

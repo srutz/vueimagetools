@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { X } from "@lucide/vue";
-import { onUnmounted, useId, watch } from "vue";
+import { twMerge } from "tailwind-merge";
+import { computed, onUnmounted, useAttrs, useId, watch } from "vue";
 
 const props = defineProps<{
   open: boolean;
@@ -10,6 +11,27 @@ const props = defineProps<{
 const emit = defineEmits<{
   openchange: [open: boolean];
 }>();
+
+// Opt out of automatic fallthrough so a passed `class` merges onto the dialog
+// panel (Tailwind-aware: conflicting utilities are deduped, the passed class
+// wins) rather than landing on the backdrop.
+defineOptions({ inheritAttrs: false });
+
+const attrs = useAttrs();
+
+const panelClasses = computed(() =>
+  twMerge(
+    "flex max-h-full w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-xl",
+    attrs.class as string,
+  ),
+);
+
+// Forward everything except `class`, which we handle above.
+const forwardedAttrs = computed(() => {
+  const rest = { ...attrs };
+  delete rest.class;
+  return rest;
+});
 
 const titleId = useId();
 
@@ -47,14 +69,15 @@ onUnmounted(() => {
   <Teleport to="body">
     <div
       v-if="open"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4"
       @click.self="close"
     >
       <div
-        class="flex max-h-full w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-xl"
+        :class="panelClasses"
         role="dialog"
         aria-modal="true"
         :aria-labelledby="titleId"
+        v-bind="forwardedAttrs"
       >
         <div
           class="flex items-center justify-between gap-4 border-b border-slate-200 px-5 py-4"

@@ -1,39 +1,42 @@
 <script lang="ts" setup>
 import { X } from "@lucide/vue";
-import { computed, ref, watch, type Component } from "vue";
+import { computed, watch, type Component } from "vue";
 
 type Tab = {
-  id?: string;
+  id: string;
   title: string;
   content: Component;
   props?: Record<string, unknown>;
 };
-const activeTabIndex = ref(0);
 
 const props = defineProps<{
   tabs: Tab[];
 }>();
 
+// Which tab is active is controlled by the parent (by stable id, since indices
+// shift as tabs are added/removed). Use `v-model:active-id`.
+const activeId = defineModel<string>("activeId");
+
 const emit = defineEmits<{
   closeTab: [tab: Tab, index: number];
 }>();
 
-const activeTab = computed(() => props.tabs[activeTabIndex.value] ?? null);
+const activeTab = computed(
+  () => props.tabs.find((tab) => tab.id === activeId.value) ?? null,
+);
 
 function handleCloseTab(tab: Tab, index: number) {
   emit("closeTab", tab, index);
 }
 
+// Self-heal: when the model is unset or points at a tab that no longer exists
+// (first render, or a stale id), fall back to the first tab so something is
+// always selected. Neighbour selection on close is the parent's job.
 watch(
-  () => props.tabs.length,
-  (length) => {
-    if (length === 0) {
-      activeTabIndex.value = 0;
-      return;
-    }
-
-    if (activeTabIndex.value >= length) {
-      activeTabIndex.value = length - 1;
+  [() => props.tabs, activeId],
+  ([tabs, id]) => {
+    if (tabs.length > 0 && !tabs.some((tab) => tab.id === id)) {
+      activeId.value = tabs[0].id;
     }
   },
   { immediate: true },
@@ -48,23 +51,21 @@ watch(
     >
       <button
         v-for="(tab, index) in tabs"
-        :key="tab.id ?? index"
+        :key="tab.id"
         :title="tab.title"
         class="flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition"
         :class="
-          index === activeTabIndex
+          tab.id === activeId
             ? 'bg-slate-900 text-white'
             : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
         "
-        @click="activeTabIndex = index"
+        @click="activeId = tab.id"
       >
         <span class="max-w-48 truncate">{{ tab.title }}</span>
         <span
           class="inline-flex h-5 w-5 items-center justify-center rounded-full transition hover:bg-black/10"
           :class="
-            index === activeTabIndex
-              ? 'hover:bg-white/15'
-              : 'hover:bg-slate-300'
+            tab.id === activeId ? 'hover:bg-white/15' : 'hover:bg-slate-300'
           "
           @click.stop="handleCloseTab(tab, index)"
         >

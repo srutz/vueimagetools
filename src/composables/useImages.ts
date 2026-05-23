@@ -21,5 +21,12 @@ export const useImages = defineStore("images", {
     removeImage(id: string) {
       this.images = this.images.filter((image) => image.id !== id);
     },
+    updateImage(id: string, data: ImageBitmap) {
+      const image = this.images.find((image) => image.id === id);
+
+      if (image) {
+        image.data = data;
+      }
+    },
   },
 });

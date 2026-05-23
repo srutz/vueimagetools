@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useRouter } from "vue-router";
+
 import type { ImageType } from "../../composables/useImages";
 import { useImages } from "../../composables/useImages";
 import Heading1 from "../ui/Heading-1.vue";
@@ -6,10 +8,15 @@ import Heading2 from "../ui/Heading-2.vue";
 import ImageUploader from "../ui/ImageUploader.vue";
 
 const images = useImages();
+const router = useRouter();
 
 function handleUploadComplete(uploadedImages: ImageType[]) {
   for (const image of uploadedImages) {
     images.addImage(image);
+  }
+
+  if (uploadedImages.length > 0) {
+    router.push("/images");
   }
 }
 </script>

@@ -8,7 +8,6 @@ const emit = defineEmits<{
   uploadComplete: [images: ImageType[]];
 }>();
 
-const inputRef = ref<HTMLInputElement | null>(null);
 const isDragging = ref(false);
 const isUploading = ref(false);
 const errorMessage = ref("");
@@ -25,10 +24,6 @@ const statusLabel = computed(() => {
 
   return "PNG, JPG, GIF, WebP, BMP and SVG supported";
 });
-
-function openFilePicker() {
-  inputRef.value?.click();
-}
 
 function setDragging(value: boolean) {
   isDragging.value = value;
@@ -130,7 +125,6 @@ async function processFiles(fileList: FileList | null) {
           }"
         >
           <input
-            ref="inputRef"
             type="file"
             accept="image/*"
             multiple

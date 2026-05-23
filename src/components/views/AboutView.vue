@@ -7,8 +7,9 @@ import Heading2 from "../ui/Heading-2.vue";
   <section class="space-y-6">
     <Heading-2>About</Heading-2>
     <Heading-1>About Image Tools</Heading-1>
+    <p>Just some small tool written with Vue.js.</p>
     <p>
-      Just some small tool written with Vue.js. Find it on GitHub:
+      Find it on GitHub:
       <a
         href="https://github.com/srutz/vueimagetools"
         target="_blank"

@@ -55,7 +55,10 @@ const handleDialogOpenChange = (value: boolean) => {
 
 <template>
   <section class="flex h-full min-h-0 flex-col gap-4">
-    <div class="space-y-2 flex items-center justify-between md:flex-row">
+    <div
+      v-if="false"
+      class="space-y-2 flex items-center justify-between md:flex-row"
+    >
       <Heading-2>Images</Heading-2>
       <button
         v-if="tabs.length > 0"
@@ -65,14 +68,6 @@ const handleDialogOpenChange = (value: boolean) => {
         Upload more images
         <PlusCircleIcon></PlusCircleIcon>
       </button>
-      <BaseDialog
-        class="w-[800px] max-w-[90%]"
-        title="Upload more images"
-        :open="uploadDialogOpen"
-        @openchange="handleDialogOpenChange($event)"
-      >
-        <ImageUploader @upload-complete="handleUploadComplete" />
-      </BaseDialog>
     </div>
 
     <TabView
@@ -80,14 +75,32 @@ const handleDialogOpenChange = (value: boolean) => {
       v-model:active-id="activeId"
       :tabs="tabs"
       @close-tab="handleCloseTab($event.id)"
-    />
+    >
+      <template #actionbutton>
+        <button
+          v-if="tabs.length > 0"
+          class="flex items-center gap-2 hover:text-slate-900 text-slate-600 transition hover:bg-slate-200 rounded-xl px-3 py-2 text-sm font-medium"
+          @click="uploadDialogOpen = true"
+        >
+          Upload images
+          <PlusCircleIcon></PlusCircleIcon>
+        </button>
+      </template>
+    </TabView>
 
     <div
       v-else
-      i
       class="flex grow items-center justify-center rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-6 py-16 text-center text-sm text-slate-500"
     >
       <ImageUploader @upload-complete="handleUploadComplete" />
     </div>
+    <BaseDialog
+      class="w-[800px] max-w-[90%]"
+      title="Upload more images"
+      :open="uploadDialogOpen"
+      @openchange="handleDialogOpenChange($event)"
+    >
+      <ImageUploader @upload-complete="handleUploadComplete" />
+    </BaseDialog>
   </section>
 </template>

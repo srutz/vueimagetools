@@ -2,6 +2,7 @@
 import { computed, ref } from "vue";
 
 import { PlusCircleIcon } from "@lucide/vue";
+import { useConfirmDialog } from "../../composables/useConfirmDialog";
 import { useImages, type ImageType } from "../../composables/useImages";
 import BaseDialog from "../ui/BaseDialog.vue";
 import Heading2 from "../ui/Heading-2.vue";
@@ -10,6 +11,7 @@ import ImageUploader from "../ui/ImageUploader.vue";
 import TabView from "../ui/TabView.vue";
 
 const images = useImages();
+const { openConfirmDialog } = useConfirmDialog();
 
 const activeId = ref<string>();
 
@@ -18,23 +20,35 @@ const tabs = computed(() =>
     id: image.id,
     title: image.name,
     content: ImagePanel,
-    props: { image },
+    props: { image, requestClose: () => handleCloseTab(image.id) },
   })),
 );
+
+function closeTab(tabId: string) {
+  if (tabId === activeId.value) {
+    const index = images.images.findIndex((image) => image.id === tabId);
+    activeId.value = (images.images[index + 1] ?? images.images[index - 1])?.id;
+  }
+  images.removeImage(tabId);
+}
 
 function handleCloseTab(tabId?: string) {
   if (!tabId) {
     return;
   }
 
-  // If we're closing the active tab, move selection to a neighbour first so the
-  // view doesn't snap back to the first tab.
-  if (tabId === activeId.value) {
-    const index = images.images.findIndex((image) => image.id === tabId);
-    activeId.value = (images.images[index + 1] ?? images.images[index - 1])?.id;
+  const image = images.images.find((i) => i.id === tabId);
+
+  if (image?.dirty) {
+    openConfirmDialog(
+      "Close image",
+      `"${image.name}" has unsaved changes. Close anyway?`,
+      () => closeTab(tabId),
+    );
+    return;
   }
 
-  images.removeImage(tabId);
+  closeTab(tabId);
 }
 
 function handleUploadComplete(uploadedImages: ImageType[]) {

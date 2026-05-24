@@ -1,15 +1,19 @@
 <script setup lang="ts">
-import { Crop, GripVertical, ZoomIn } from "@lucide/vue";
+import { Crop, GripVertical, Redo2, Undo2, ZoomIn } from "@lucide/vue";
 import { ref } from "vue";
 
 export type ToolId = "zoom" | "crop";
 
 defineProps<{
   activeTool: ToolId | null;
+  canUndo: boolean;
+  canRedo: boolean;
 }>();
 
 const emit = defineEmits<{
   (e: "tool-click", tool: ToolId): void;
+  (e: "undo"): void;
+  (e: "redo"): void;
 }>();
 
 const tools: { id: ToolId; label: string; icon: typeof ZoomIn }[] = [
@@ -82,7 +86,7 @@ function onPointerUp(event: PointerEvent) {
 <template>
   <div
     ref="rootRef"
-    class="absolute z-10 flex flex-col gap-1 rounded-xl border border-slate-200 bg-white/95 p-1 shadow-xl backdrop-blur select-none"
+    class="absolute z-10 flex flex-col gap-1 rounded-xl border border-slate-300 bg-white/95 p-1 shadow-2xl backdrop-blur select-none"
     :style="{ left: `${position.x}px`, top: `${position.y}px` }"
     role="toolbar"
     aria-label="Image tools"
@@ -113,6 +117,37 @@ function onPointerUp(event: PointerEvent) {
       @click="selectTool(tool.id)"
     >
       <component :is="tool.icon" class="h-5 w-5" />
+    </button>
+    <hr class="border-slate-200 mx-1" />
+    <button
+      type="button"
+      :disabled="!canUndo"
+      title="Undo (Ctrl+Z)"
+      aria-label="Undo"
+      :class="[
+        'flex h-9 w-9 items-center justify-center rounded-lg transition',
+        canUndo
+          ? 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+          : 'text-slate-300 cursor-not-allowed',
+      ]"
+      @click="emit('undo')"
+    >
+      <Undo2 class="h-5 w-5" />
+    </button>
+    <button
+      type="button"
+      :disabled="!canRedo"
+      title="Redo (Ctrl+Y)"
+      aria-label="Redo"
+      :class="[
+        'flex h-9 w-9 items-center justify-center rounded-lg transition',
+        canRedo
+          ? 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+          : 'text-slate-300 cursor-not-allowed',
+      ]"
+      @click="emit('redo')"
+    >
+      <Redo2 class="h-5 w-5" />
     </button>
   </div>
 </template>

@@ -8,6 +8,7 @@ import ImageToolbox, { type ToolId } from "./ImageToolbox.vue";
 
 const props = defineProps<{
   image: ImageType;
+  requestClose?: () => void;
 }>();
 
 const images = useImages();
@@ -312,7 +313,6 @@ async function applyCrop() {
   const previous = props.image.data;
   const cropped = await createImageBitmap(previous, sx, sy, sw, sh);
   images.updateImage(props.image.id, cropped);
-  previous.close();
 
   clearSelection();
   resetView();
@@ -332,9 +332,20 @@ function resetView() {
 
 let resizeObserver: ResizeObserver | null = null;
 
+function handleKeyDown(e: KeyboardEvent) {
+  if (e.ctrlKey && !e.shiftKey && e.key === "z") {
+    e.preventDefault();
+    images.undoImage(props.image.id);
+  } else if (e.ctrlKey && (e.key === "y" || (e.shiftKey && e.key === "Z"))) {
+    e.preventDefault();
+    images.redoImage(props.image.id);
+  }
+}
+
 onMounted(() => {
   computeFit();
   drawImage();
+  window.addEventListener("keydown", handleKeyDown);
 
   const viewport = scrollRef.value;
 
@@ -346,6 +357,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   resizeObserver?.disconnect();
+  window.removeEventListener("keydown", handleKeyDown);
 });
 
 watch(
@@ -366,7 +378,7 @@ watch(activeTool, (tool) => {
   <section
     class="flex h-full flex-col gap-4 bg-slate-50 p-2 sm:p-6 justify-start"
   >
-    <ImageHeader :image="image" />
+    <ImageHeader :image="image" @close="props.requestClose?.()" />
     <div ref="containerRef" class="relative flex min-h-0 grow overflow-hidden">
       <div
         ref="scrollRef"
@@ -412,7 +424,14 @@ watch(activeTool, (tool) => {
         <BaseButton variant="ghost" @click="clearSelection">Cancel</BaseButton>
       </div>
 
-      <ImageToolbox :active-tool="activeTool" @tool-click="handleToolClick" />
+      <ImageToolbox
+        :active-tool="activeTool"
+        :can-undo="props.image.undoStack.length > 0"
+        :can-redo="props.image.redoStack.length > 0"
+        @tool-click="handleToolClick"
+        @undo="images.undoImage(props.image.id)"
+        @redo="images.redoImage(props.image.id)"
+      />
     </div>
   </section>
 </template>

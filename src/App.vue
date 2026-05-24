@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ConfirmDialog from "./components/ui/ConfirmDialog.vue";
 import MenuBar from "./components/ui/MenuBar.vue";
 </script>
 
@@ -8,5 +9,6 @@ import MenuBar from "./components/ui/MenuBar.vue";
     <main class="p-4 overflow-auto grow p-4">
       <RouterView />
     </main>
+    <ConfirmDialog />
   </div>
 </template>

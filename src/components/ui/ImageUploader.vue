@@ -64,6 +64,9 @@ async function processFiles(fileList: FileList | null) {
         id: crypto.randomUUID(),
         name: file.name,
         data: await createImageBitmap(file),
+        dirty: false,
+        undoStack: [] as ImageBitmap[],
+        redoStack: [] as ImageBitmap[],
       })),
     );
 

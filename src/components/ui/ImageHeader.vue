@@ -24,7 +24,11 @@ function closeMenu() {
 }
 
 function toggleMenu() {
-  menuOpen.value ? closeMenu() : openMenu();
+  if (menuOpen.value) {
+    closeMenu();
+  } else {
+    openMenu();
+  }
 }
 
 const menuRef = ref<HTMLDivElement | null>(null);
@@ -102,7 +106,9 @@ function closeImage() {
         </div>
       </div>
 
-      <p class="flex items-center gap-2 truncate text-lg font-semibold text-slate-950">
+      <p
+        class="flex items-center gap-2 truncate text-lg font-semibold text-slate-950"
+      >
         <span
           v-if="image.dirty"
           class="h-2 w-2 shrink-0 rounded-full bg-amber-400"

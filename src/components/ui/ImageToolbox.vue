@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { Crop, GripVertical, Redo2, Undo2, ZoomIn } from "@lucide/vue";
+import { Crop, FlipHorizontal2, FlipVertical2, GripVertical, Redo2, RotateCcw, RotateCw, Undo2, ZoomIn } from "@lucide/vue";
 import { ref } from "vue";
+import ToolboxButton from "./ToolboxButton.vue";
 
 export type ToolId = "zoom" | "crop";
 
@@ -14,6 +15,10 @@ const emit = defineEmits<{
   (e: "tool-click", tool: ToolId): void;
   (e: "undo"): void;
   (e: "redo"): void;
+  (e: "rotate-cw"): void;
+  (e: "rotate-ccw"): void;
+  (e: "flip-h"): void;
+  (e: "flip-v"): void;
 }>();
 
 const tools: { id: ToolId; label: string; icon: typeof ZoomIn }[] = [
@@ -27,10 +32,6 @@ const dragging = ref(false);
 let pointerId: number | null = null;
 let offsetX = 0;
 let offsetY = 0;
-
-function selectTool(id: ToolId) {
-  emit("tool-click", id);
-}
 
 function onPointerDown(event: PointerEvent) {
   const root = rootRef.value;
@@ -106,48 +107,39 @@ function onPointerUp(event: PointerEvent) {
     >
       <GripVertical class="h-4 w-4 rotate-90" />
     </button>
-    <button
+
+    <ToolboxButton
       v-for="tool in tools"
       :key="tool.id"
-      type="button"
-      :title="tool.label"
-      :aria-label="tool.label"
-      :aria-pressed="activeTool === tool.id"
-      class="flex h-9 w-9 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 aria-pressed:bg-slate-900 aria-pressed:text-white"
-      @click="selectTool(tool.id)"
+      :label="tool.label"
+      :pressed="activeTool === tool.id"
+      @click="emit('tool-click', tool.id)"
     >
       <component :is="tool.icon" class="h-5 w-5" />
-    </button>
+    </ToolboxButton>
+
     <hr class="border-slate-200 mx-1" />
-    <button
-      type="button"
-      :disabled="!canUndo"
-      title="Undo (Ctrl+Z)"
-      aria-label="Undo"
-      :class="[
-        'flex h-9 w-9 items-center justify-center rounded-lg transition',
-        canUndo
-          ? 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-          : 'text-slate-300 cursor-not-allowed',
-      ]"
-      @click="emit('undo')"
-    >
+
+    <ToolboxButton label="Undo (Ctrl+Z)" :disabled="!canUndo" @click="emit('undo')">
       <Undo2 class="h-5 w-5" />
-    </button>
-    <button
-      type="button"
-      :disabled="!canRedo"
-      title="Redo (Ctrl+Y)"
-      aria-label="Redo"
-      :class="[
-        'flex h-9 w-9 items-center justify-center rounded-lg transition',
-        canRedo
-          ? 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-          : 'text-slate-300 cursor-not-allowed',
-      ]"
-      @click="emit('redo')"
-    >
+    </ToolboxButton>
+    <ToolboxButton label="Redo (Ctrl+Y)" :disabled="!canRedo" @click="emit('redo')">
       <Redo2 class="h-5 w-5" />
-    </button>
+    </ToolboxButton>
+
+    <hr class="border-slate-200 mx-1" />
+
+    <ToolboxButton label="Rotate clockwise" @click="emit('rotate-cw')">
+      <RotateCw class="h-5 w-5" />
+    </ToolboxButton>
+    <ToolboxButton label="Rotate counter-clockwise" @click="emit('rotate-ccw')">
+      <RotateCcw class="h-5 w-5" />
+    </ToolboxButton>
+    <ToolboxButton label="Flip horizontal" @click="emit('flip-h')">
+      <FlipHorizontal2 class="h-5 w-5" />
+    </ToolboxButton>
+    <ToolboxButton label="Flip vertical" @click="emit('flip-v')">
+      <FlipVertical2 class="h-5 w-5" />
+    </ToolboxButton>
   </div>
 </template>

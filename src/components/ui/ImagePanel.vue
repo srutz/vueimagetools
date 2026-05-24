@@ -332,6 +332,55 @@ function resetView() {
 
 let resizeObserver: ResizeObserver | null = null;
 
+async function applyTransform(
+  draw: (ctx: CanvasRenderingContext2D, src: ImageBitmap) => void,
+  outWidth: number,
+  outHeight: number,
+) {
+  const canvas = document.createElement("canvas");
+  canvas.width = outWidth;
+  canvas.height = outHeight;
+  draw(canvas.getContext("2d")!, props.image.data);
+  const bitmap = await createImageBitmap(canvas);
+  images.updateImage(props.image.id, bitmap);
+}
+
+function rotateCW() {
+  const { width: w, height: h } = props.image.data;
+  applyTransform((ctx, src) => {
+    ctx.translate(h, 0);
+    ctx.rotate(Math.PI / 2);
+    ctx.drawImage(src, 0, 0);
+  }, h, w);
+}
+
+function rotateCCW() {
+  const { width: w, height: h } = props.image.data;
+  applyTransform((ctx, src) => {
+    ctx.translate(0, w);
+    ctx.rotate(-Math.PI / 2);
+    ctx.drawImage(src, 0, 0);
+  }, h, w);
+}
+
+function flipH() {
+  const { width: w, height: h } = props.image.data;
+  applyTransform((ctx, src) => {
+    ctx.translate(w, 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(src, 0, 0);
+  }, w, h);
+}
+
+function flipV() {
+  const { width: w, height: h } = props.image.data;
+  applyTransform((ctx, src) => {
+    ctx.translate(0, h);
+    ctx.scale(1, -1);
+    ctx.drawImage(src, 0, 0);
+  }, w, h);
+}
+
 function handleKeyDown(e: KeyboardEvent) {
   if (e.ctrlKey && !e.shiftKey && e.key === "z") {
     e.preventDefault();
@@ -431,6 +480,10 @@ watch(activeTool, (tool) => {
         @tool-click="handleToolClick"
         @undo="images.undoImage(props.image.id)"
         @redo="images.redoImage(props.image.id)"
+        @rotate-cw="rotateCW"
+        @rotate-ccw="rotateCCW"
+        @flip-h="flipH"
+        @flip-v="flipV"
       />
     </div>
   </section>

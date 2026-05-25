@@ -22,7 +22,7 @@ const handleConfirm = () => {
   >
     <p class="text-sm text-slate-500">{{ state.message }}</p>
     <div class="mt-6 flex justify-end gap-4">
-      <BaseButton variant="outline" @click="handleCancel()">
+      <BaseButton variant="ghost" @click="handleCancel()">
         {{ "Cancel" }}
       </BaseButton>
       <BaseButton @click="handleConfirm()">

@@ -1,6 +1,8 @@
 
 // quotes from dummyjson.com/quotes
 
+// ZOD oder Yup für datenvalidierung
+
 export type Quote = {
     id: number,
     quote: string,

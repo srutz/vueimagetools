@@ -1,9 +1,6 @@
 <script setup lang="ts">
-import { useWindowSize } from '@vueuse/core';
+import WindowIndicator from '../../WindowIndicator.vue';
 import BatteryIndicator from '../BatteryIndicator.vue';
-
-
-const { width, height } = useWindowSize();
 
 
 </script>
@@ -11,10 +8,6 @@ const { width, height } = useWindowSize();
 <template>
   <main>
     <BatteryIndicator :segment-count="3 + 12"></BatteryIndicator>
-
-    {{ width }} x {{  height }}
-    <div v-if="height < 240">
-      Wenig Platz
-    </div>
+    <WindowIndicator></WindowIndicator>
   </main>
 </template>

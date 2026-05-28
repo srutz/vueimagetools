@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref } from "vue";
 import CardPanel from "../CardPanel.vue";
-const collapsed = ref(false)
+import { useStorage } from "@vueuse/core";
+//const collapsed = ref(false)
+  const collapsed = useStorage('c1', false)
 </script>
 
 <template>

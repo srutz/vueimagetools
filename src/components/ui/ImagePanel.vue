@@ -4,6 +4,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import { useImages, type ImageType } from "../../composables/useImages";
 import BaseButton from "./BaseButton.vue";
 import ImageHeader from "./ImageHeader.vue";
+import ImagePropsDialog from "./ImagePropsDialog.vue";
 import ImageToolbox, { type ToolId } from "./ImageToolbox.vue";
 
 const props = defineProps<{
@@ -17,6 +18,7 @@ const canvasRef = ref<HTMLCanvasElement | null>(null);
 const containerRef = ref<HTMLDivElement | null>(null);
 const scrollRef = ref<HTMLDivElement | null>(null);
 const activeTool = ref<ToolId | null>("zoom");
+const infoDialogOpen = ref(false);
 const zoom = ref(1);
 
 const MIN_ZOOM = 0.1;
@@ -484,7 +486,14 @@ watch(activeTool, (tool) => {
         @rotate-ccw="rotateCCW"
         @flip-h="flipH"
         @flip-v="flipV"
+        @info="infoDialogOpen = true"
       />
     </div>
+
+    <ImagePropsDialog
+      :open="infoDialogOpen"
+      :image="props.image"
+      @openchange="infoDialogOpen = $event"
+    />
   </section>
 </template>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Crop, FlipHorizontal2, FlipVertical2, GripVertical, Redo2, RotateCcw, RotateCw, Undo2, ZoomIn } from "@lucide/vue";
+import { Crop, FlipHorizontal2, FlipVertical2, GripVertical, Info, Redo2, RotateCcw, RotateCw, Undo2, ZoomIn } from "@lucide/vue";
 import { ref } from "vue";
 import ToolboxButton from "./ToolboxButton.vue";
 
@@ -19,6 +19,7 @@ const emit = defineEmits<{
   (e: "rotate-ccw"): void;
   (e: "flip-h"): void;
   (e: "flip-v"): void;
+  (e: "info"): void;
 }>();
 
 const tools: { id: ToolId; label: string; icon: typeof ZoomIn }[] = [
@@ -140,6 +141,12 @@ function onPointerUp(event: PointerEvent) {
     </ToolboxButton>
     <ToolboxButton label="Flip vertical" @click="emit('flip-v')">
       <FlipVertical2 class="h-5 w-5" />
+    </ToolboxButton>
+
+    <hr class="border-slate-200 mx-1" />
+
+    <ToolboxButton label="Image properties" @click="emit('info')">
+      <Info class="h-5 w-5" />
     </ToolboxButton>
   </div>
 </template>

@@ -7,6 +7,8 @@ export type ImageType = {
   dirty: boolean;
   undoStack: ImageBitmap[];
   redoStack: ImageBitmap[];
+  fileSize?: number;
+  mimeType?: string;
 };
 
 type ImagesState = {
@@ -50,6 +52,10 @@ export const useImages = defineStore("images", {
       image.redoStack.push(image.data);
       image.data = image.undoStack.pop()!;
       image.dirty = image.undoStack.length > 0;
+    },
+    renameImage(id: string, name: string) {
+      const image = this.images.find((i) => i.id === id);
+      if (image) image.name = name;
     },
     redoImage(id: string) {
       const image = this.images.find((i) => i.id === id);

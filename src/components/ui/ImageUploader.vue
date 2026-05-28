@@ -67,6 +67,8 @@ async function processFiles(fileList: FileList | null) {
         dirty: false,
         undoStack: [] as ImageBitmap[],
         redoStack: [] as ImageBitmap[],
+        fileSize: file.size,
+        mimeType: file.type,
       })),
     );
 

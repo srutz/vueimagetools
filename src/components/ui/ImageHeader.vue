@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Download, Menu, X } from "@lucide/vue";
-import { onUnmounted, ref } from "vue";
-import type { ImageType } from "../../composables/useImages";
+import { nextTick, onUnmounted, ref } from "vue";
+import { useImages, type ImageType } from "../../composables/useImages";
 
 const props = defineProps<{
   image: ImageType;
@@ -10,6 +10,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: "close"): void;
 }>();
+
+const images = useImages();
 
 const menuOpen = ref(false);
 
@@ -64,6 +66,37 @@ function closeImage() {
   closeMenu();
   emit("close");
 }
+
+const editingName = ref(false);
+const editName = ref("");
+const nameInputRef = ref<HTMLInputElement | null>(null);
+
+async function startEditName() {
+  editName.value = props.image.name;
+  editingName.value = true;
+  await nextTick();
+  nameInputRef.value?.select();
+}
+
+function commitEditName() {
+  const name = editName.value.trim();
+  if (name && name !== props.image.name) {
+    images.renameImage(props.image.id, name);
+  }
+  editingName.value = false;
+}
+
+function cancelEditName() {
+  editingName.value = false;
+}
+
+function handleNameKeydown(e: KeyboardEvent) {
+  if (e.key === "Enter") {
+    commitEditName();
+  } else if (e.key === "Escape") {
+    cancelEditName();
+  }
+}
 </script>
 
 <template>
@@ -106,16 +139,30 @@ function closeImage() {
         </div>
       </div>
 
-      <p
-        class="flex items-center gap-2 truncate text-lg font-semibold text-slate-950"
-      >
+      <div class="flex items-center gap-2 min-w-0">
         <span
           v-if="image.dirty"
           class="h-2 w-2 shrink-0 rounded-full bg-amber-400"
           title="Unsaved changes"
         />
-        {{ image.name }}
-      </p>
+        <input
+          v-if="editingName"
+          ref="nameInputRef"
+          v-model="editName"
+          class="text-lg font-semibold text-slate-950 bg-transparent border-b-2 border-sky-400 outline-none min-w-0 w-48 truncate"
+          @blur="commitEditName"
+          @keydown="handleNameKeydown"
+        />
+        <button
+          v-else
+          type="button"
+          class="text-lg font-semibold text-slate-950 truncate hover:text-sky-600 transition cursor-text"
+          title="Click to rename"
+          @click="startEditName"
+        >
+          {{ image.name }}
+        </button>
+      </div>
     </div>
 
     <p class="shrink-0 text-sm text-slate-500">

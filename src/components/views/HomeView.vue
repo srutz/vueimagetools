@@ -2,6 +2,7 @@
 import { ref } from "vue";
 import CardPanel from "../CardPanel.vue";
 const collapsed = ref(false)
+const collapsed2 = ref(false)
 </script>
 
 <template>
@@ -13,7 +14,11 @@ const collapsed = ref(false)
       Lorem ipsum lorem tada.
       Lorem ipsum lorem tada,
       </CardPanel>
-      <button class="px-2 py-1 border border-gray-400 cursor-pointer"
-        @click="collapsed = !collapsed">Toggle</button>
+    <CardPanel heading="Preferences" :collapsed="collapsed2" 
+        footer="Manage your preferences" 
+        @toggle="collapsed2 = !collapsed2" >
+       Second panes
+      </CardPanel>
+
   </main>
 </template>

@@ -6,7 +6,9 @@ const collapsed = ref(false)
 
 <template>
   <main>
-    <CardPanel heading="Preferences" :collapsed="collapsed" footer="Manage your preferences">
+    <CardPanel heading="Preferences" :collapsed="collapsed" 
+        footer="Manage your preferences" 
+        @toggle="collapsed = !collapsed" >
       Lorem ipsum lorem tada.
       Lorem ipsum lorem tada.
       Lorem ipsum lorem tada,

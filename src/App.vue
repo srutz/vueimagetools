@@ -5,7 +5,7 @@ import MenuBar from "./components/ui/MenuBar.vue";
 <template>
   <div class="w-screen h-screen bg-background flex flex-col">
     <MenuBar />
-    <main class="p-4 overflow-auto grow p-4">
+    <main class="p-4 overflow-auto grow p-4 flex flex-col gap-4">
       <RouterView />
     </main>
   </div>

@@ -7,6 +7,8 @@ import { Settings } from "@lucide/vue";
     <Settings />
     <RouterLink to="/">Home</RouterLink>
     <RouterLink to="/quotes">Quotes</RouterLink>
+    <RouterLink to="/products">Products</RouterLink>
+    <RouterLink to="/orders">Orders</RouterLink>
     <RouterLink to="/about">About</RouterLink>
   </nav>
 </template>

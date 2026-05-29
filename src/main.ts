@@ -7,6 +7,7 @@ import HomeView from "./components/views/HomeView.vue";
 import AboutView from "./components/views/AboutView.vue";
 import QuoteView from "./components/views/QuoteView.vue";
 import { VueQueryPlugin } from "@tanstack/vue-query";
+import store from "./store";
 
 const routes = [
   { path: "/", component: HomeView },
@@ -19,4 +20,4 @@ const router = createRouter({
   routes,
 });
 
-createApp(App).use(VueQueryPlugin).use(router).mount("#app");
+createApp(App).use(VueQueryPlugin).use(store).use(router).mount("#app");

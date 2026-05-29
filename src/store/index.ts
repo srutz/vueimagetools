@@ -1,15 +1,15 @@
-import { createStore, useStore as useVuexStore } from "vuex";
 import type { Store } from "vuex";
+import { createStore, useStore as useVuexStore } from "vuex";
+import { seedProducts } from "./seed";
 import type {
-  RootState,
-  Product,
+  Invoice,
+  InvoiceLine,
   Order,
   OrderLine,
   OrderStatus,
-  Invoice,
-  InvoiceLine,
+  Product,
+  RootState,
 } from "./types";
-import { seedProducts, seedOrders } from "./seed";
 
 // Injection key would normally live here; for simplicity we expose a typed
 // useStore() helper instead.
@@ -28,36 +28,64 @@ function nextInvoiceId(): string {
 const store = createStore<RootState>({
   state: (): RootState => ({
     products: seedProducts,
-    orders: seedOrders,
+    orders: [],
     invoices: [],
   }),
 
   getters: {
-    productById: (state) => (id: string): Product | undefined =>
-      state.products.find((p) => p.id === id),
+    orders: (state) => state.orders,
+    pizzaCount: (state) => {
+      let pizzaCount = 0;
+      for (let i = 0; i < state.orders.length; i++) {
+        const order = state.orders[i];
+        if (order.status !== "queued") {
+          continue;
+        }
+        for (let j = 0; j < order.lines.length; j++) {
+          const line = order.lines[j];
+          if (line.productId.startsWith("p-")) {
+            pizzaCount += line.quantity;
+          }
+        }
+      }
+      return pizzaCount;
+    },
+    productById:
+      (state) =>
+      (id: string): Product | undefined =>
+        state.products.find((p) => p.id === id),
 
     availableProducts: (state): Product[] =>
       state.products.filter((p) => p.available),
 
-    productsByCategory: (state) => (category: Product["category"]): Product[] =>
-      state.products.filter((p) => p.category === category),
+    productsByCategory:
+      (state) =>
+      (category: Product["category"]): Product[] =>
+        state.products.filter((p) => p.category === category),
 
     // Orders that are not yet served — i.e. still "in preparation".
     ordersInPreparation: (state): Order[] =>
       state.orders.filter((o) => o.status !== "served"),
 
-    orderById: (state) => (id: string): Order | undefined =>
-      state.orders.find((o) => o.id === id),
+    orderById: (state) => {
+      return (id: string) => {
+        return state.orders.find((o) => o.id === id);
+      };
+    },
 
     // Computes the running total for an order from current product prices.
-    orderTotal: (state, getters) => (orderId: string): number => {
-      const order = state.orders.find((o) => o.id === orderId);
-      if (!order) return 0;
-      return order.lines.reduce((sum, line) => {
-        const product: Product | undefined = getters.productById(line.productId);
-        return sum + (product ? product.price * line.quantity : 0);
-      }, 0);
-    },
+    orderTotal:
+      (state, getters) =>
+      (orderId: string): number => {
+        const order = state.orders.find((o) => o.id === orderId);
+        if (!order) return 0;
+        return order.lines.reduce((sum, line) => {
+          const product: Product | undefined = getters.productById(
+            line.productId,
+          );
+          return sum + (product ? product.price * line.quantity : 0);
+        }, 0);
+      },
 
     invoicesOfTheDay: (state): Invoice[] => {
       const today = new Date().toDateString();
@@ -78,10 +106,7 @@ const store = createStore<RootState>({
       state.orders.push(order);
     },
 
-    setOrderStatus(
-      state,
-      payload: { orderId: string; status: OrderStatus },
-    ) {
+    setOrderStatus(state, payload: { orderId: string; status: OrderStatus }) {
       const order = state.orders.find((o) => o.id === payload.orderId);
       if (order) order.status = payload.status;
     },
@@ -144,10 +169,7 @@ const store = createStore<RootState>({
         };
       });
 
-      const total = lines.reduce(
-        (sum, l) => sum + l.unitPrice * l.quantity,
-        0,
-      );
+      const total = lines.reduce((sum, l) => sum + l.unitPrice * l.quantity, 0);
 
       const invoice: Invoice = {
         id: nextInvoiceId(),

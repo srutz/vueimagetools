@@ -1,5 +1,10 @@
 <script setup lang="ts">
 import { XCircle } from "@lucide/vue";
+import FooterLine from "./FooterLine.vue";
+import HBox from "./HBox.vue";
+import HeadingLine from "./HeadingLine.vue";
+import ShadowBox from "./ShadowBox.vue";
+import SpaceEater from "./SpaceEater.vue";
 
 interface PropsType {
   // definiere unsere eigenschaften
@@ -20,25 +25,17 @@ const handleToggle = () => {
 };
 </script>
 <template>
-  <div
-    class="w-[240px] flex flex-col gap-4 border border-gray-300 shadow-xl p-4 m-2 rounded-xl"
-  >
-    <div class="flex justify-between items-center">
-      <div class="font-semibold text-xl uppercase tracking-widest">
-        {{ heading }}
-      </div>
+  <ShadowBox>
+    <HBox>
+      <HeadingLine>{{ heading }}</HeadingLine>
       <button v-if="showToggle" @click="handleToggle()">
         <XCircle />
       </button>
-    </div>
-    <template v-if="!collapsed">
+    </HBox>
+    <template v-if="!collapsed || !showToggle">
       <slot></slot>
-      <div class="grow"></div>
-      <div
-        class="text-right pt-2 text-xs text-gray-500 border-gray-300 border-t"
-      >
-        {{ footer }}
-      </div>
+      <SpaceEater></SpaceEater>
+      <FooterLine>{{ footer }}</FooterLine>
     </template>
-  </div>
+  </ShadowBox>
 </template>
